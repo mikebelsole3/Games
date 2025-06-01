@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tap The One! Game</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow: hidden; /* Prevent scrolling */
+        }
+
+        /* Basic CSS-in-JS styling converted to plain CSS */
+        .App {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw; /* Ensure it takes full width */
+            background-color: #282c34;
+            color: white;
+            overflow: hidden; /* Hide overflow to prevent scrollbars */
+            position: relative;
+        }
+
+        .welcome-screen, .instructions-screen, .upgrade-selection-screen {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px; /* Add padding for better appearance */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background-color: #3a3f47; /* Consistent background */
+        }
+
+        .game-title {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #61dafb; /* Highlight title */
+        }
+
+        .instructions-screen {
+            max-width: 600px;
+            text-align: left; /* Align text left for readability */
+            max-height: 80vh; /* Limit height to enable scrolling */
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+
+        .instructions-title {
+            font-size: 2em;
+            color: #61dafb;
+            text-align: center; /* Center title */
+        }
+
+        .instructions-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        /* Style for subheadings within instructions */
+        .instructions-text h3 {
+            font-size: 1.5em; /* Slightly smaller than main title, larger than body */
+            color: #61dafb; /* Highlight color */
+            margin-top: 20px; /* Space above subheading */
+            margin-bottom: 10px; /* Space below subheading */
+            text-align: center; /* Center these subheadings */
+        }
+        /* Style for horizontal rule within instructions */
+        .instructions-text hr {
+            border: none;
+            border-top: 2px solid #61dafb; /* Blue line */
+            margin: 20px 0; /* Space above and below the line */
+        }
+
+
+        .button, .ability-button {
+            padding: 12px 25px; /* Slightly larger padding */
+            font-size: 1.2em;
+            cursor: pointer;
+            background-color: #61dafb;
+            color: #282c34;
+            border: none;
+            border-radius: 8px; /* More rounded corners */
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:hover, .ability-button:hover {
+            background-color: #4ac1e8; /* Darker on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .ability-button[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #666;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .header-bar {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 8px;
+            background-color: #3a3f47;
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+
+        .main-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding-bottom: 5px;
+            font-size: 1.5em;
+            gap: 10px;
+        }
+
+        .top-stats-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 0 10px;
+        }
+
+        .abilities-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding-top: 5px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .bottom-bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 0;
+            background-color: #3a3f47;
+            z-index: 10;
+            font-size: 1.6em;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        .timer, .score {
+            padding: 5px 10px;
+            background-color: #282c34;
+            border-radius: 5px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+
+        .upgrade-status-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+            margin: 0 5px;
+            flex-grow: 1;
+        }
+
+        .upgrade-status-label {
+            font-weight: bold;
+            color: #61dafb;
+        }
+
+        .upgrade-status-item {
+            padding: 2px 6px;
+            background-color: #282c34;
+            border-radius: 3px;
+            box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2);
+            font-size: 1em;
+            white-space: nowrap;
+        }
+
+        .game-area {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .circle {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease-out, background-color 0.2s ease;
+            box-shadow: 0 0 15px rgba(0,0,0,0.6);
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+
+        .circle:hover {
+            transform: scale(1.05);
+        }
+
+        .power-up {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5em;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease-out, filter 0.2s ease;
+            filter: drop-shadow(0 0 12px rgba(0,255,255,0.9));
+        }
+
+        .power-up:hover {
+            transform: scale(1.1);
+        }
+
+        .visual-cue {
+            position: absolute;
+            font-size: 2em;
+            font-weight: bold;
+            opacity: 0;
+            animation: fadeOutUp 0.7s forwards;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(255,255,255,0.7);
+            white-space: nowrap;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes fadeOutUp {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -100px) scale(1.2);
+            }
+        }
+
+        .game-over-screen {
+            background-color: #3a3f47;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            width: 80%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .game-over-text {
+            font-size: 3.5em;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+
+        .final-score {
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            color: #61dafb;
+        }
+
+        .upgrade-selection-screen {
+            background-color: #3a3f47;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .upgrade-title {
+            font-size: 3em;
+            color: #61dafb;
+            margin-bottom: 25px;
+        }
+
+        .upgrade-options-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .upgrade-card {
+            background-color: #282c34;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #61dafb;
+            width: 280px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .upgrade-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(0, 218, 251, 0.6);
+            border-color: #4ac1e8;
+        }
+
+        .upgrade-card[data-clickable="true"] {
+            cursor: pointer;
+        }
+
+        .upgrade-card[data-clickable="false"] {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .upgrade-card h3 {
+            color: #61dafb;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .upgrade-card p {
+            font-size: 1.25em;
+            line-height: 1.5;
+            text-align: center;
+            color: #bbb;
+        }
+        /* Style for upgrade value display within the card */
+        .upgrade-value-display {
+            font-size: 1em;
+            color: #ccc;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .upgrade-value-line {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: normal; /* Allow text to wrap */
+            word-wrap: break-word; /* Break long words */
+            text-align: center; /* Center text within the line */
+        }
+        .upgrade-value-line strong {
+            color: #61dafb;
+        }
+
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 1024px) {
+            .header-bar .main-stats {
+                font-size: 1.4em;
+            }
+        }
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2.5em;
+            }
+            .instructions-title, .upgrade-title, .game-over-text {
+                font-size: 2em;
+            }
+            .button, .ability-button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+            .header-bar .main-stats {
+                flex-direction: column;
+                gap: 10px;
+                padding: 0;
+            }
+            .timer, .score {
+                width: 80%;
+                margin: 0 auto;
+            }
+            .upgrade-status-container {
+                width: 90%;
+                justify-content: center;
+                gap: 5px;
+                font-size: 0.8em;
+            }
+            .upgrade-status-item {
+                padding: 1px 4px;
+                font-size: 0.9em;
+            }
+            .abilities-container {
+                padding: 5px 0;
+            }
+            .bottom-bar {
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px;
+            }
+            .game-over-screen {
+                width: 90%;
+                padding: 20px;
+            }
+            .upgrade-card h3 {
+                font-size: 1.5em;
+            }
+            .upgrade-card p {
+                font-size: 1em;
+            }
+        }
+
+        /* New CSS for ability use indicators */
+        .ability-uses-container {
+            display: flex;
+            align-items: center;
+            margin-left: 8px;
+            gap: 4px;
+        }
+
+        .use-indicator-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid #282c34;
+        }
+
+        .use-indicator-circle.filled {
+            background-color: #FFFFFF;
+        }
+
+        /* Styles for the prominent "Get Both Upgrades" button */
+        .prominent-button {
+            background-color: #FFD700;
+            color: #282c34;
+            padding: 15px 30px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 10px;
+            box-shadow: 0 6px 12px rgba(255, 215, 0, 0.4);
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .prominent-button:hover {
+            background-color: #e6c200;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(255, 215, 0, 0.6);
+        }
+
+        .prominent-button[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #aaa;
+            box-shadow: none;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Define available upgrade options and their effects outside the component
+        // This ensures the array reference is stable and doesn't cause unnecessary re-renders.
+        const UPGRADE_OPTIONS = [
+          {
+            key: 'TIME_BONUS_BOOST',
+            name: "Time Bonus Boost",
+            description: "Increases time gained from correct taps by 0.1 seconds.",
+            cost: 1, // Cost in seconds
+            // Check if timeBonusMultiplier has reached its maximum (1.0 initial + 0.5 max increase = 1.5)
+            isMaxed: (timeBonusMultiplier) => timeBonusMultiplier >= 1.5,
+            apply: (setTimeBonusMultiplier) => {
+              setTimeBonusMultiplier(prev => prev + 0.1);
+            }
+          },
+          {
+            key: 'PENALTY_REDUCTION',
+            name: "Penalty Reduction",
+            description: "Reduces penalty for wrong taps by 0.2 seconds (minimum 1.0s).",
+            cost: 0, // No cost
+            // Check if penaltyAmount has reached its minimum
+            isMaxed: (penaltyAmount) => penaltyAmount <= 1.0,
+            apply: (setPenaltyAmount) => {
+              setPenaltyAmount(prev => Math.max(1.0, prev - 0.2));
+            }
+          },
+          {
+            key: 'RESPAWN_RATE_INCREASE', // Key remains the same for internal logic
+            name: "Reset Respawn Rate", // Changed name
+            description: "Resets the current circle spawn rate to the slowest possible spawn time. Also decreases the slowest possible spawn time by 0.1 seconds (to a min of 0.5s).", // Updated description
+            cost: 0, // No cost
+            // Check if circleSpeedCeiling has reached its minimum
+            isMaxed: (circleSpeedCeiling) => circleSpeedCeiling <= 500, // 0.5 seconds
+            apply: (setCircleSpawnInterval, setCircleSpeedCeiling, currentCircleSpeedCeiling) => {
+              // Calculate the new ceiling first
+              const newCeiling = Math.max(500, currentCircleSpeedCeiling - 100);
+              setCircleSpeedCeiling(newCeiling); // Set the new ceiling
+              setCircleSpawnInterval(newCeiling); // Reset current spawn interval to the new ceiling
+            }
+          },
+          {
+            key: 'INSTANT_TIME_GAIN',
+            name: "Power-Up Time Boost", // New name
+            description: "Adds 1 second to the ⏱️ power-up bonus (up to a max of 6s).", // New description with emoji
+            cost: 0, // No cost for this upgrade
+            isMaxed: (addTimePowerUpBonus) => addTimePowerUpBonus >= 6, // Max 6 seconds added by power-up
+            apply: (setAddTimePowerUpBonus) => {
+              setAddTimePowerUpBonus(prev => Math.min(6, prev + 1));
+            }
+          },
+          {
+            key: 'MIN_SPAWN_RATE_INCREASE',
+            name: "Minimum Spawn Rate Increase",
+            description: "Increases the fastest possible circle spawn time by 0.1 seconds (to a max of 0.3s).",
+            cost: 0, // No cost
+            // Check if circleSpeedFloor has reached its maximum
+            isMaxed: (circleSpeedFloor) => circleSpeedFloor >= 300, // 0.3 seconds
+            apply: (setCircleSpeedFloor, setCircleSpawnInterval, currentCircleSpawnInterval, currentCircleSpeedFloor) => {
+              // Calculate the new floor value first
+              const calculatedNewFloor = Math.min(300, currentCircleSpeedFloor + 100);
+
+              // Update the state for circleSpeedFloor
+              setCircleSpeedFloor(calculatedNewFloor);
+
+              // Update the spawn interval, ensuring it's not faster than the new minimum (calculatedNewFloor)
+              setCircleSpawnInterval(prev => Math.max(calculatedNewFloor, prev));
+            }
+          },
+          {
+            key: 'UPGRADE_POWER_UPS', // New combined upgrade
+            name: "Upgrade Power-Ups",
+            description: "Increases power-up duration by 0.1 seconds (up to 1.5s) and decreases spawn delay by 1.0 seconds (to a min of 1.0s/5.0s).", // Updated description
+            cost: 2, // Cost in seconds
+            isMaxed: (powerUpDisplayDuration, powerUpMinDelay, powerUpMaxDelay) => {
+                const durationMaxed = powerUpDisplayDuration >= 1500; // Changed from 2000 to 1500
+                const spawnRateMaxed = powerUpMinDelay <= 1000 && powerUpMaxDelay <= 5000;
+                return durationMaxed && spawnRateMaxed;
+            },
+            apply: (setPowerUpDisplayDuration, setPowerUpMinDelay, setPowerUpMaxDelay) => {
+              setPowerUpDisplayDuration(prev => Math.min(1500, prev + 100)); // Changed from 200 to 100
+              setPowerUpMinDelay(prev => Math.max(1000, prev - 1000));
+              setPowerUpMaxDelay(prev => Math.max(5000, prev - 1000));
+            }
+          },
+          {
+            key: 'FILL_ABILITY_USES', // New upgrade key
+            name: "Refill All Abilities", // Changed name here
+            description: "Fills all ability uses (Clear Screen and Pause Timer) to their maximum.",
+            cost: 2, // Cost in seconds
+            isMaxed: (clearScreenUses, maxClearScreenUses, pauseTimerUses, maxPauseTimerUses) => {
+                return clearScreenUses >= maxClearScreenUses && pauseTimerUses >= maxPauseTimerUses;
+            },
+            apply: (setClearScreenUses, maxClearScreenUses, setPauseTimerUses, maxPauseTimerUses) => {
+                setClearScreenUses(maxClearScreenUses);
+                setPauseTimerUses(maxPauseTimerUses);
+            }
+          },
+        ];
+
+        // Constants for ability limits
+        const MAX_CLEAR_SCREEN_USES = 3; // Changed from 2 to 3
+        const MAX_PAUSE_TIMER_USES = 3; // Changed from 2 to 3
+
+        function App() {
+          // State to manage the current phase of the game: 'welcome', 'instructions', 'playing', or 'upgrade_selection'
+          const [gamePhase, setGamePhase] = React.useState('welcome'); // Changed initial state to 'welcome'
+
+          // Game states (only active when gamePhase is 'playing')
+          const [timeLeft, setTimeLeft] = React.useState(10);
+          const [score, setScore] = React.useState(0);
+          const [circles, setCircles] = React.useState([]);
+          const [gameOver, setGameOver] = React.useState(false);
+          const [circleSpawnInterval, setCircleSpawnInterval] = React.useState(1000); // Initial 1 second (1000ms)
+          const [powerUps, setPowerUps] = React.useState([]);
+
+          // New states for upgrade parameters
+          const [penaltyAmount, setPenaltyAmount] = React.useState(2.0); // Initial penalty for wrong taps changed to 2.0
+          const [timeBonusMultiplier, setTimeBonusMultiplier] = React.useState(1.0); // Multiplier for time gained from '1' taps
+          const [powerUpMinDelay, setPowerUpMinDelay] = React.useState(6000); // Changed from 5000 to 6000 (6 seconds)
+          const [powerUpMaxDelay, setPowerUpMaxDelay] = React.useState(10000); // Max delay for power-up spawn in ms
+          const [circleSpeedFloor, setCircleSpeedFloor] = React.useState(100); // Initial fastest spawn time (0.1 seconds)
+          const [circleSpeedCeiling, setCircleSpeedCeiling] = React.useState(1000); // Initial slowest spawn time (1 PUSHED);
+          const [powerUpDisplayDuration, setPowerUpDisplayDuration] = React.useState(1000); // New state for power-up display duration
+          const [addTimePowerUpBonus, setAddTimePowerUpBonus] = React.useState(2); // New state for time power-up bonus
+
+          // New states for abilities
+          const [clearScreenUses, setClearScreenUses] = React.useState(2); // Initial uses for Clear Screen ability - KEPT 2
+          const [pauseTimerUses, setPauseTimerUses] = React.useState(1); // Initial uses for Pause Timer ability - KEPT 1
+
+          // State for storing the two chosen upgrade options for the current selection
+          const [currentUpgradeOptions, setCurrentUpgradeOptions] = React.useState([]);
+          // New state to control clickability of upgrade cards
+          const [upgradesClickable, setUpgradesClickable] = React.useState(false);
+
+          // New state for visual cues
+          const [visualCues, setVisualCues] = React.useState([]);
+
+          // New state to track if the timer is currently paused by a power-up
+          const [isTimerPaused, setIsTimerPaused] = React.useState(false);
+
+          // Refs for timers and current state values
+          const timerRef = React.useRef(null); // Ref for the main game countdown timer
+          const spawnTimerRef = React.useRef(null); // Ref for the circle spawning interval
+          const powerUpSpawnSchedulerRef = React.useRef(null); // Ref for the power-up scheduling timeout
+          const pauseTimerTimeoutRef = React.useRef(null); // Ref for the timer pause duration
+
+          // Ref for the combined header bar to get its actual rendered height
+          const headerBarRef = React.useRef(null);
+          const bottomBarRef = React.useRef(null);
+          const gameAreaRef = React.useRef(null); // New ref for the game area
+
+          // Effects to keep the refs updated with the latest states
+          const circlesRef = React.useRef(circles); // Define circlesRef here
+          const powerUpsRef = React.useRef(powerUps); // Define powerUpsRef here
+
+
+          React.useEffect(() => {
+            circlesRef.current = circles;
+          }, [circles]);
+
+          React.useEffect(() => {
+            powerUpsRef.current = powerUps;
+          }, [powerUps]);
+
+          // Effect to update window dimensions on resize
+          React.useEffect(() => {
+            const handleResize = () => {
+              // This effect is mainly for potential future use cases that need window dimensions.
+              // The game area dimensions are handled by `isGameAreaReady` check.
+            };
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+          }, []);
+
+          // Effect to manage the upgrade card clickability delay
+          React.useEffect(() => {
+            let delayTimeout;
+            if (gamePhase === 'upgrade_selection') {
+              setUpgradesClickable(false); // Make them unclickable immediately
+              delayTimeout = setTimeout(() => {
+                setUpgradesClickable(true); // Make them clickable after 1 second
+              }, 1000); // 1-second delay
+            } else {
+              setUpgradesClickable(false); // Ensure they are not clickable outside upgrade phase
+            }
+
+            return () => clearTimeout(delayTimeout); // Cleanup the timeout
+          }, [gamePhase]); // Only re-run when gamePhase changes
+
+          /**
+           * Generates random coordinates for a new element (circle or power-up) within the game area bounds.
+           * Ensures the element is fully visible and avoids overlapping with existing elements.
+           * This function is memoized with useCallback as its dependencies are stable.
+           * @param {Array} allActiveElements - An array of all currently visible circles and power-ups.
+           * @param {number} containerWidth - The width of the game area container.
+           * @param {number} containerHeight - The height of the game area container.
+           * @returns {Object} An object with x and y coordinates.
+           */
+          const generatePosition = React.useCallback((allActiveElements, containerWidth, containerHeight) => {
+            const elementDiameter = 80;
+            const safePadding = 20; // Reverted to a smaller padding
+
+            const minX = safePadding;
+            const maxX = containerWidth - elementDiameter - safePadding;
+            const minY = safePadding;
+            const maxY = containerHeight - elementDiameter - safePadding;
+
+            // Ensure that the min is not greater than the max, otherwise clamp it
+            const actualMinX = Math.max(0, minX);
+            const actualMaxX = Math.max(actualMinX, maxX);
+            const actualMinY = Math.max(0, minY);
+            const actualMaxY = Math.max(actualMinY, maxY);
+
+            let x, y;
+            let attempts = 0;
+            const maxAttempts = 100;
+
+            const rangeX = Math.max(0, actualMaxX - actualMinX);
+            const rangeY = Math.max(0, actualMaxY - actualMinY);
+
+            while (attempts < maxAttempts) {
+                x = actualMinX + Math.random() * rangeX;
+                y = actualMinY + Math.random() * rangeY;
+
+                let overlap = false;
+                for (const existingElement of allActiveElements) {
+                    if (existingElement.visible && existingElement.x !== undefined && existingElement.y !== undefined) {
+                        const newLeft = x;
+                        const newRight = x + elementDiameter;
+                        const newTop = y;
+                        const newBottom = y + elementDiameter;
+
+                        const existingLeft = existingElement.x;
+                        const existingRight = existingElement.x + elementDiameter;
+                        const existingTop = existingElement.y;
+                        const existingBottom = existingElement.y + elementDiameter;
+
+                        if (newLeft < existingRight &&
+                            newRight > existingLeft &&
+                            newTop < existingBottom &&
+                            newBottom > existingTop) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!overlap) {
+                    return { x, y };
+                }
+                attempts++;
+            }
+            console.warn("Could not find a non-overlapping position after many attempts. Returning a potentially overlapping position.");
+            return {
+                x: actualMinX + Math.random() * rangeX,
+                y: actualMinY + Math.random() * rangeY
+            };
+          }, []);
+
+          /**
+           * Removes a power-up from the screen after its timeout.
+           * This function is memoized with useCallback as its dependencies are stable.
+           * @param {number} id - The ID of the power-up to remove.
+           */
+          const removePowerUp = React.useCallback((id) => {
+            setPowerUps(prevPowerUps => {
+                const powerUpToRemove = prevPowerUps.find(pu => pu.id === id);
+                if (powerUpToRemove && gameAreaRef.current) {
+                    const cueId = Date.now();
+                    setVisualCues(prev => [...prev, { id: cueId, x: powerUpToRemove.x, y: powerUpToRemove.y, text: 'Missed!', color: '#FF0000' }]); // Red color for missed
+                    setTimeout(() => {
+                        setVisualCues(prev => prev.filter(cue => cue.id !== cueId));
+                    }, 700);
+                }
+                return prevPowerUps.filter(pu => pu.id !== id);
+            });
+          }, []);
+
+          /**
+           * useEffect hook for managing the main game countdown timer.
+           * This timer runs independently of the circle spawning rate.
+           */
+          React.useEffect(() => {
+            // Clear timer if game is over or not in 'playing' phase
+            // Also clear if timer is paused by a power-up
+            if (gameOver || gamePhase !== 'playing' || isTimerPaused) {
+              clearInterval(timerRef.current);
+              return;
+            }
+
+            // Start the main countdown timer (decrements every second)
+            timerRef.current = setInterval(() => {
+              setTimeLeft((prevTime) => {
+                const newTime = prevTime - 1; // Decrement the time by 1 second
+                // If time is 0.5 or less, the next tick it will be 0 or less, so set game over
+                if (newTime <= 0) {
+                  setGameOver(true);
+                  return 0;
+                }
+                return newTime;
+              });
+            }, 1000); // Main timer runs every 1000ms (1 second)
+
+            // Cleanup function: clear the timer when the component unmounts or effect re-runs
+            return () => clearInterval(timerRef.current);
+          }, [gameOver, gamePhase, isTimerPaused]); // Depends on `gameOver`, `gamePhase`, and `isTimerPaused`
+
+          /**
+           * useEffect hook for managing the circle spawning timer.
+           * This timer's rate changes based on the score.
+           * The logic for adding a new circle is inlined here to avoid `addNewCircle`
+           * being a dependency, which could cause unnecessary timer resets.
+           */
+          React.useEffect(() => {
+            // Clear spawn timer if game is over or not in 'playing' phase
+            // Also clear if timer is paused by a power-up
+            // ADDED: Check if gameAreaRef.current is available before spawning
+            if (gameOver || gamePhase !== 'playing' || isTimerPaused || !gameAreaRef.current) {
+              clearInterval(spawnTimerRef.current);
+              return;
+            }
+
+            // Clear existing spawn timer before setting a new one, in case circleSpawnInterval changed
+            clearInterval(spawnTimerRef.current);
+            // Start the circle spawning timer (spawns a new circle at the dynamic rate)
+            spawnTimerRef.current = setInterval(() => {
+              // Inlined logic from addNewCircle
+              const allActiveElements = [...circlesRef.current, ...powerUpsRef.current];
+              // Pass gameArea's dimensions directly
+              const { x, y } = generatePosition(allActiveElements, gameAreaRef.current.offsetWidth, gameAreaRef.current.offsetHeight);
+
+              const highestCurrentNumber = circlesRef.current.reduce((max, circle) => {
+                return Math.max(max, circle.number);
+              }, 0);
+
+              const newCircleNum = highestCurrentNumber + 1;
+
+              setCircles(prevCircles => {
+                // Add the new circle
+                let updatedCircles = [
+                  { id: Date.now(), x, y, number: newCircleNum, visible: true },
+                  ...prevCircles,
+                ];
+
+                // Check if a '1' circle is currently visible
+                let oneIsVisible = updatedCircles.some(circle => circle.number === 1);
+
+                // If '1' is not visible, decrement all circle numbers until '1' appears
+                while (!oneIsVisible && updatedCircles.length > 0) {
+                  updatedCircles = updatedCircles.map(circle => ({
+                    ...circle,
+                    number: Math.max(1, circle.number - 1) // Ensure number doesn't go below 1
+                  }));
+                  oneIsVisible = updatedCircles.some(circle => circle.number === 1);
+                }
+                return updatedCircles;
+              });
+            }, circleSpawnInterval); // Use the dynamic circleSpawnInterval
+
+            // Cleanup function: clear the spawn timer when the component unmounts or effect re-runs
+            return () => clearInterval(spawnTimerRef.current);
+          }, [gameOver, gamePhase, circleSpawnInterval, generatePosition, setCircles, circlesRef, powerUpsRef, isTimerPaused]); // Removed isGameAreaReady from dependencies
+
+          /**
+           * useEffect hook for managing the power-up spawning timer.
+           * Spawns power-ups at random intervals between 5 and 10 seconds.
+           * The logic for adding a new power-up is inlined here to avoid `addNewPowerUp`
+           * being a dependency, which could cause unnecessary timer resets.
+           */
+          React.useEffect(() => {
+            // Clear any existing timeout when dependencies change or component unmounts
+            if (powerUpSpawnSchedulerRef.current) {
+              clearTimeout(powerUpSpawnSchedulerRef.current);
+              powerUpSpawnSchedulerRef.current = null;
+            }
+
+            // Only start scheduling a new power-up if:
+            // 1. Game is playing
+            // 2. There are NO power-ups currently on screen (`powerUps.length === 0`)
+            // 3. Game is not over
+            // ADDED: Check if gameAreaRef.current is available before spawning
+            if (gamePhase === 'playing' && powerUps.length === 0 && !gameOver && gameAreaRef.current) {
+              const randomDelay = Math.random() * (powerUpMaxDelay - powerUpMinDelay) + powerUpMinDelay;
+
+              powerUpSpawnSchedulerRef.current = setTimeout(() => {
+                // Determine available power-up types based on clearScreenUses and current spawn interval
+                const availablePowerUpTypes = ['addTime'];
+                if (clearScreenUses < MAX_CLEAR_SCREEN_USES) { // Only allow clearScreen power-up if uses are less than max
+                  availablePowerUpTypes.push('clearScreen');
+                }
+                // Only allow slowSpawn power-up if current spawn interval is faster than the ceiling
+                if (circleSpawnInterval < circleSpeedCeiling) {
+                  availablePowerUpTypes.push('slowSpawn');
+                }
+                // Only allow pauseTimer power-up if uses are less than max
+                if (pauseTimerUses < MAX_PAUSE_TIMER_USES) {
+                    availablePowerUpTypes.push('pauseTimer_ability_powerup');
+                }
+
+                // If no power-ups are available, don't spawn anything.
+                if (availablePowerUpTypes.length === 0) {
+                  return;
+                }
+
+                const randomType = availablePowerUpTypes[Math.floor(Math.random() * availablePowerUpTypes.length)];
+
+                // Generate position for the new power-up
+                const allActiveElements = [...circlesRef.current, ...powerUpsRef.current];
+                // Pass gameArea's dimensions directly
+                const { x, y } = generatePosition(allActiveElements, gameAreaRef.current.offsetWidth, gameAreaRef.current.offsetHeight);
+
+                const newPowerUpId = Date.now();
+                const disappearanceTimeoutId = setTimeout(() => {
+                  removePowerUp(newPowerUpId);
+                }, powerUpDisplayDuration); // Use the new state variable for display duration
+
+                setPowerUps(prevPowerUps => [
+                  { id: newPowerUpId, x, y, type: randomType, visible: true, timeoutId: disappearanceTimeoutId },
+                  ...prevPowerUps,
+                ]);
+
+                // After a power-up is added, this useEffect will re-run due to powerUps.length changing.
+                // The condition `powerUps.length === 0` will then be false, preventing immediate re-scheduling.
+                // When the power-up disappears (via removePowerUp), powerUps.length will become 0 again,
+                // causing this useEffect to re-run and schedule the next power-up.
+
+              }, randomDelay);
+            }
+
+            // Cleanup function: clear the timeout when the component unmounts or dependencies change
+            return () => {
+              if (powerUpSpawnSchedulerRef.current) {
+                clearTimeout(powerUpSpawnSchedulerRef.current);
+                powerUpSpawnSchedulerRef.current = null;
+              }
+            };
+          }, [gameOver, gamePhase, powerUpMinDelay, powerUpMaxDelay, powerUps.length, generatePosition, removePowerUp, setPowerUps, circlesRef, powerUpsRef, clearScreenUses, powerUpDisplayDuration, circleSpawnInterval, circleSpeedCeiling, pauseTimerUses]);
+
+          /**
+           * Handles the click event on a regular circle.
+           * If '1' is tapped, it hides that circle, adds time based on current spawn rate,
+           * increments the score, and subtracts 1 from all other visible circles' numbers.
+           * If any other number is tapped, it subtracts penaltyAmount seconds from the timer.
+           * If time hits 0 or less, game is over.
+           * @param {number} id - The unique ID of the clicked circle.
+           * @param {number} number - The number displayed on the clicked circle.
+           */
+          const handleCircleClick = (id, number) => {
+            if (gameOver || gamePhase !== 'playing') return;
+
+            if (number === 1) {
+              setCircles(prevCircles => {
+                const updatedCircles = prevCircles
+                  .filter(circle => circle.id !== id)
+                  .map(circle => ({
+                    ...circle,
+                    number: Math.max(1, circle.number - 1)
+                  }));
+                return updatedCircles;
+              });
+
+              setTimeLeft(prevTime => prevTime + (circleSpawnInterval / 1000) * timeBonusMultiplier);
+
+              setScore(prevScore => {
+                const newScore = prevScore + 1;
+                if (newScore > 0 && newScore % 20 === 0 && gamePhase === 'playing') {
+                  setGamePhase('upgrade_selection');
+                  selectRandomUpgrades();
+                }
+                if (newScore > 0 && newScore % 10 === 0) {
+                  setCircleSpawnInterval(prevInterval => {
+                    const newInterval = Math.max(circleSpeedFloor, prevInterval - 100);
+                    if (newInterval < prevInterval && gameAreaRef.current) {
+                        const gameAreaWidth = gameAreaRef.current.offsetWidth;
+                        const gameAreaHeight = gameAreaRef.current.offsetHeight;
+                        const cueX = gameAreaWidth / 2;
+                        const cueY = gameAreaHeight / 2;
+                        const cueId = Date.now();
+                        setVisualCues(prev => [...prev, { id: cueId, x: cueX, y: cueY, text: 'Faster Spawn!', color: '#FF4500' }]);
+                        setTimeout(() => {
+                            setVisualCues(prev => prev.filter(cue => cue.id !== cueId));
+                        }, 700);
+                    }
+                    return newInterval;
+                  });
+                }
+                return newScore;
+              });
+            } else {
+              if (!isTimerPaused) {
+                setTimeLeft(prevTime => {
+                  const newTime = prevTime - penaltyAmount;
+                  if (newTime <= 0) {
+                    setGameOver(true);
+                    return 0;
+                  }
+                  return newTime;
+                });
+              }
+            }
+          };
+
+          /**
+           * Handles the click event on a power-up diamond.
+           * Applies the specific power-up effect and removes the diamond.
+           * Clears the power-up's disappearance timeout.
+           * @param {string} type - The type of power-up (e.g., 'addTime').
+           * @param {number} id - The ID of the power-up to remove.
+           * @param {number} timeoutId - The ID of the timeout that would make the power-up disappear.
+           */
+          const handlePowerUpClick = (type, id, timeoutId) => {
+            if (gameOver || gamePhase !== 'playing') return;
+
+            clearTimeout(timeoutId);
+
+            const powerUp = powerUpsRef.current.find(pu => pu.id === id);
+            if (powerUp) {
+                const cueId = Date.now();
+                let cueText = '';
+                let cueColor = '';
+                switch (type) {
+                    case 'addTime':
+                        cueText = `+${addTimePowerUpBonus}s`;
+                        cueColor = '#4CAF50';
+                        setTimeLeft(prevTime => prevTime + addTimePowerUpBonus);
+                        break;
+                    case 'clearScreen':
+                        cueText = 'Ability +1';
+                        cueColor = '#61dafb';
+                        setClearScreenUses(prev => Math.min(MAX_CLEAR_SCREEN_USES, prev + 1));
+                        break;
+                    case 'slowSpawn':
+                        cueText = 'Slowed!';
+                        cueColor = '#FFD700';
+                        setCircleSpawnInterval(prev => Math.min(circleSpeedCeiling, prev + 200));
+                        break;
+                    case 'pauseTimer_ability_powerup':
+                        cueText = 'Pause +1';
+                        cueColor = '#ADD8E6';
+                        setPauseTimerUses(prev => Math.min(MAX_PAUSE_TIMER_USES, prev + 1));
+                        break;
+                    default:
+                        console.warn('Unknown power-up type:', type);
+                }
+
+                setVisualCues(prev => [...prev, { id: cueId, x: powerUp.x, y: powerUp.y, text: cueText, color: cueColor }]);
+                setTimeout(() => {
+                    setVisualCues(prev => prev.filter(cue => cue.id !== cueId));
+                }, 700);
+            }
+
+            setPowerUps(prevPowerUps => prevPowerUps.filter(pu => pu.id !== id));
+          };
+
+          /**
+           * Initiates the game by setting the game phase to 'playing',
+           * resetting scores, time, and circle states.
+           */
+          const startGame = () => {
+            setTimeLeft(10);
+            setScore(0);
+            setCircles([]);
+            setPowerUps([]);
+            setGameOver(false);
+            setCircleSpawnInterval(1000);
+            setPenaltyAmount(2.0);
+            setTimeBonusMultiplier(1.0);
+            setPowerUpMinDelay(6000);
+            setPowerUpMaxDelay(10000);
+            setCircleSpeedFloor(100);
+            setCircleSpeedCeiling(1000);
+            setPowerUpDisplayDuration(1000);
+            setAddTimePowerUpBonus(2);
+            setClearScreenUses(2);
+            setPauseTimerUses(1);
+            setIsTimerPaused(false);
+            if (pauseTimerTimeoutRef.current) {
+                clearTimeout(pauseTimerTimeoutRef.current);
+                pauseTimerTimeoutRef.current = null;
+            }
+            setGamePhase('playing');
+          };
+
+          /**
+           * Restarts the game from the beginning.
+           */
+          const restartGame = () => {
+            startGame();
+          };
+
+          /**
+           * Returns to the welcome menu.
+           */
+          const returnToMenu = () => {
+            setGamePhase('welcome');
+            // Reset all game states to initial values for a fresh start
+            setTimeLeft(10);
+            setScore(0);
+            setCircles([]);
+            setPowerUps([]);
+            setGameOver(false);
+            setCircleSpawnInterval(1000);
+            setPenaltyAmount(2.0);
+            setTimeBonusMultiplier(1.0);
+            setPowerUpMinDelay(6000);
+            setPowerUpMaxDelay(10000);
+            setCircleSpeedFloor(100);
+            setCircleSpeedCeiling(1000);
+            setPowerUpDisplayDuration(1000);
+            setAddTimePowerUpBonus(2);
+            setClearScreenUses(2);
+            setPauseTimerUses(1);
+            setIsTimerPaused(false);
+            if (timerRef.current) clearInterval(timerRef.current);
+            if (spawnTimerRef.current) clearInterval(spawnTimerRef.current);
+            if (powerUpSpawnSchedulerRef.current) clearTimeout(powerUpSpawnSchedulerRef.current);
+            if (pauseTimerTimeoutRef.current) clearTimeout(pauseTimerTimeoutRef.current);
+          };
+
+          /**
+           * Displays the game instructions.
+           */
+          const showInstructions = () => {
+            setGamePhase('instructions');
+          };
+
+          /**
+           * Goes back to the game playing screen.
+           */
+          const backToGame = () => {
+            setGamePhase('playing');
+          };
+
+          /**
+           * Selects two random, non-maxed-out upgrade options for the player to choose from.
+           */
+          const selectRandomUpgrades = React.useCallback(() => {
+            const availableUpgrades = UPGRADE_OPTIONS.filter(option => {
+              // Check if the upgrade is maxed out
+              let isOptionMaxed = false;
+              if (option.key === 'TIME_BONUS_BOOST') isOptionMaxed = option.isMaxed(timeBonusMultiplier);
+              else if (option.key === 'PENALTY_REDUCTION') isOptionMaxed = option.isMaxed(penaltyAmount);
+              else if (option.key === 'RESPAWN_RATE_INCREASE') isOptionMaxed = option.isMaxed(circleSpeedCeiling);
+              else if (option.key === 'MIN_SPAWN_RATE_INCREASE') isOptionMaxed = option.isMaxed(circleSpeedFloor);
+              else if (option.key === 'UPGRADE_POWER_UPS') isOptionMaxed = option.isMaxed(powerUpDisplayDuration, powerUpMinDelay, powerUpMaxDelay);
+              else if (option.key === 'INSTANT_TIME_GAIN') isOptionMaxed = option.isMaxed(addTimePowerUpBonus);
+              else if (option.key === 'FILL_ABILITY_USES') isOptionMaxed = option.isMaxed(clearScreenUses, MAX_CLEAR_SCREEN_USES, pauseTimerUses, MAX_PAUSE_TIMER_USES);
+
+              // Check if the player can afford the upgrade and won't go below 1 second
+              const canAfford = timeLeft - option.cost > 1;
+
+              return !isOptionMaxed && canAfford;
+            });
+
+            if (availableUpgrades.length < 2) {
+              setCurrentUpgradeOptions(availableUpgrades);
+              return;
+            }
+
+            const chosen = new Set();
+            while (chosen.size < 2) {
+              const randomIndex = Math.floor(Math.random() * availableUpgrades.length);
+              chosen.add(availableUpgrades[randomIndex]);
+            }
+            setCurrentUpgradeOptions(Array.from(chosen));
+          }, [timeLeft, timeBonusMultiplier, penaltyAmount, circleSpeedCeiling, circleSpeedFloor, powerUpDisplayDuration, powerUpMinDelay, powerUpMaxDelay, addTimePowerUpBonus, clearScreenUses, pauseTimerUses]);
+
+          /**
+           * Applies the chosen upgrade's effect and returns to the game.
+           * @param {Object} upgrade - The upgrade object to apply.
+           */
+          const applyUpgrade = React.useCallback((upgrade) => {
+            if (!upgradesClickable || timeLeft < upgrade.cost) return;
+
+            setTimeLeft(prev => prev - upgrade.cost);
+
+            switch (upgrade.key) {
+              case 'TIME_BONUS_BOOST':
+                upgrade.apply(setTimeBonusMultiplier);
+                break;
+              case 'PENALTY_REDUCTION':
+                upgrade.apply(setPenaltyAmount);
+                break;
+              case 'RESPAWN_RATE_INCREASE':
+                upgrade.apply(setCircleSpawnInterval, setCircleSpeedCeiling, circleSpeedCeiling);
+                break;
+              case 'INSTANT_TIME_GAIN':
+                upgrade.apply(setAddTimePowerUpBonus);
+                break;
+              case 'MIN_SPAWN_RATE_INCREASE':
+                upgrade.apply(setCircleSpeedFloor, setCircleSpawnInterval, circleSpawnInterval, circleSpeedFloor);
+                break;
+              case 'UPGRADE_POWER_UPS':
+                upgrade.apply(setPowerUpDisplayDuration, setPowerUpMinDelay, setPowerUpMaxDelay);
+                break;
+              case 'FILL_ABILITY_USES':
+                upgrade.apply(setClearScreenUses, MAX_CLEAR_SCREEN_USES, setPauseTimerUses, MAX_PAUSE_TIMER_USES);
+                break;
+              default:
+                console.warn('Unknown upgrade key:', upgrade.key);
+            }
+            setGamePhase('playing');
+            setCurrentUpgradeOptions([]);
+          }, [upgradesClickable, timeLeft, setTimeBonusMultiplier, setPenaltyAmount, setCircleSpawnInterval, circleSpeedCeiling, setTimeLeft, setCircleSpeedFloor, setPowerUpDisplayDuration, setPowerUpMinDelay, setPowerUpMaxDelay, circleSpawnInterval, circleSpeedFloor, setAddTimePowerUpBonus, clearScreenUses, pauseTimerUses]);
+
+          /**
+           * Handles the ability to use "Clear Screen".
+           * Removes all circles from the screen and decrements uses.
+           */
+          const useClearScreenAbility = () => {
+            if (clearScreenUses > 0 && gamePhase === 'playing' && !gameOver) { // Added !gameOver check
+              setCircles([]);
+              setClearScreenUses(prev => prev - 1);
+            }
+          };
+
+          /**
+           * Handles the ability to use "Pause Timer".
+           * Pauses the game timer and circle spawning for a short duration.
+           */
+          const usePauseTimerAbility = () => {
+            if (pauseTimerUses > 0 && gamePhase === 'playing' && !isTimerPaused && !gameOver) { // Added !gameOver check
+              setIsTimerPaused(true);
+              setPauseTimerUses(prev => prev - 1);
+
+              pauseTimerTimeoutRef.current = setTimeout(() => {
+                setIsTimerPaused(false);
+                pauseTimerTimeoutRef.current = null;
+              }, 3000);
+            }
+          };
+
+          /**
+           * Allows the player to spend 4 seconds to get both chosen upgrades.
+           */
+          const handleSpendTimeToChooseSecondUpgrade = () => {
+            const individualCostsSum = currentUpgradeOptions.reduce((sum, option) => sum + (option.cost || 0), 0);
+            const totalCost = 3 + individualCostsSum;
+
+            if (upgradesClickable && timeLeft >= totalCost && currentUpgradeOptions.length === 2) {
+              setTimeLeft(prev => prev - totalCost);
+
+              currentUpgradeOptions.forEach(upgrade => {
+                switch (upgrade.key) {
+                  case 'TIME_BONUS_BOOST':
+                    upgrade.apply(setTimeBonusMultiplier);
+                    break;
+                  case 'PENALTY_REDUCTION':
+                    upgrade.apply(setPenaltyAmount);
+                    break;
+                  case 'RESPAWN_RATE_INCREASE':
+                    upgrade.apply(setCircleSpawnInterval, setCircleSpeedCeiling, circleSpeedCeiling);
+                    break;
+                  case 'INSTANT_TIME_GAIN':
+                    upgrade.apply(setAddTimePowerUpBonus);
+                    break;
+                  case 'MIN_SPAWN_RATE_INCREASE':
+                    upgrade.apply(setCircleSpeedFloor, setCircleSpawnInterval, circleSpawnInterval, circleSpeedFloor);
+                    break;
+                  case 'UPGRADE_POWER_UPS':
+                    upgrade.apply(setPowerUpDisplayDuration, setPowerUpMinDelay, setPowerUpMaxDelay);
+                    break;
+                  case 'FILL_ABILITY_USES':
+                    upgrade.apply(setClearScreenUses, MAX_CLEAR_SCREEN_USES, setPauseTimerUses, MAX_PAUSE_TIMER_USES);
+                    break;
+                  default:
+                    console.warn('Unknown upgrade key:', upgrade.key);
+                }
+              });
+              setGamePhase('playing');
+              setCurrentUpgradeOptions([]);
+            }
+          };
+
+          // Helper function to render use indicator circles
+          const renderUseIndicators = (currentUses, maxUses) => {
+            const indicators = [];
+            for (let i = 0; i < maxUses; i++) {
+              indicators.push(
+                <div
+                  key={i}
+                  className={`use-indicator-circle ${i < currentUses ? 'filled' : ''}`}
+                ></div>
+              );
+            }
+            return <div className="ability-uses-container">{indicators}</div>;
+          };
+
+          // Helper function to get the current value of an upgrade parameter
+          const getUpgradeValue = (key) => {
+            switch (key) {
+                case 'TIME_BONUS_BOOST': return `+${(timeBonusMultiplier - 1.0).toFixed(1)}s`;
+                case 'PENALTY_REDUCTION': return penaltyAmount.toFixed(1) + 's';
+                case 'RESPAWN_RATE_INCREASE': return `Current: ${(circleSpawnInterval / 1000).toFixed(1)}s<br/>Max: ${(circleSpeedCeiling / 1000).toFixed(1)}s`;
+                case 'MIN_SPAWN_RATE_INCREASE': return (circleSpeedFloor / 1000).toFixed(1) + 's';
+                case 'UPGRADE_POWER_UPS': return `Duration: ${(powerUpDisplayDuration / 1000).toFixed(1)}s<br/>Spawn: Every ${(powerUpMinDelay / 1000).toFixed(0)} - ${(powerUpMaxDelay / 1000).toFixed(0)}s`;
+                case 'INSTANT_TIME_GAIN': return addTimePowerUpBonus.toFixed(0) + 's';
+                case 'FILL_ABILITY_USES': return `Clear: ${clearScreenUses}/${MAX_CLEAR_SCREEN_USES}, Pause: ${pauseTimerUses}/${MAX_PAUSE_TIMER_USES}`;
+                default: return 'N/A';
+            }
+          };
+
+          // Helper function to get the projected value of an upgrade parameter if applied
+          const getProjectedUpgradeValue = (key) => {
+              switch (key) {
+                  case 'TIME_BONUS_BOOST':
+                      return `+${((timeBonusMultiplier + 0.1) - 1.0).toFixed(1)}s`;
+                  case 'PENALTY_REDUCTION':
+                      return Math.max(1.0, penaltyAmount - 0.2).toFixed(1) + 's';
+                  case 'RESPAWN_RATE_INCREASE':
+                      const newCeilingRespawn = Math.max(500, circleSpeedCeiling - 100);
+                      return `New: ${(newCeilingRespawn / 1000).toFixed(1)}s<br/>Max: ${(newCeilingRespawn / 1000).toFixed(1)}s`;
+                  case 'MIN_SPAWN_RATE_INCREASE':
+                      const newFloorMinSpawn = Math.min(300, circleSpeedFloor + 100);
+                      return (newFloorMinSpawn / 1000).toFixed(1) + 's';
+                  case 'UPGRADE_POWER_UPS':
+                      const newPowerUpDuration = Math.min(1500, powerUpDisplayDuration + 100);
+                      const newPowerUpMinDelay = Math.max(1000, powerUpMinDelay - 1000);
+                      const newPowerUpMaxDelay = Math.max(5000, powerUpMaxDelay - 1000);
+                      return `Duration: ${(newPowerUpDuration / 1000).toFixed(1)}s<br/>Spawn: Every ${(newPowerUpMinDelay / 1000).toFixed(0)} - ${(newPowerUpMaxDelay / 1000).toFixed(0)}s`;
+                  case 'INSTANT_TIME_GAIN':
+                      return Math.min(6, addTimePowerUpBonus + 1).toFixed(0) + 's';
+                  case 'FILL_ABILITY_USES':
+                      return `Clear: ${MAX_CLEAR_SCREEN_USES}/${MAX_CLEAR_SCREEN_USES}, Pause: ${MAX_PAUSE_TIMER_USES}/${MAX_PAUSE_TIMER_USES}`;
+                  default: return 'N/A';
+              }
+          };
+
+
+          // Render logic based on gamePhase
+          return (
+            <div className="App">
+              {/* Welcome Screen */}
+              {gamePhase === 'welcome' && (
+                <div className="welcome-screen">
+                  <h1 className="game-title">Tap The One!</h1>
+                  <button className="button" onClick={startGame}>Start Game</button>
+                  <button className="button" onClick={showInstructions}>Instructions</button>
+                </div>
+              )}
+
+              {/* Instructions Screen */}
+              {gamePhase === 'instructions' && (
+                <div className="instructions-screen">
+                  <h2 className="instructions-title">Instructions</h2>
+                  <p className="instructions-text">
+                    Your goal is to quickly tap the <strong>circle numbered 1</strong>.<br />
+                    Each correct tap increases your score and time.<br />
+                    Tapping any other number will <strong>deduct time</strong>. The game is over when you run out of time.
+                    <br /><br />
+                    Every <strong>10 points</strong>, the circles will spawn faster.<br />
+                    Every <strong>20 points</strong>, you get to choose a permanent upgrade.
+                    <br /><br />
+                    <strong>Power-ups</strong> (⏱️ or 🧹 or 🐢 or ⏸️) will occasionally appear. Tap them for special bonuses like extra time, gaining a "Clear Screen" ability use, slowing down the circle spawn rate, or gaining a "Pause Timer" ability use.
+                    <br /><br />
+                    <hr />
+                    <h3>Clear Screen Ability</h3>
+                    The <strong>Clear Screen</strong> ability lets you instantly remove all circles from the screen. It's perfect for when things get too hectic!
+                    <br /><br />
+                    <hr />
+                    <h3>Pause Timer Ability</h3>
+                    The <strong>Pause Timer</strong> ability temporarily stops both the game timer and circle spawning for 3 seconds. This is a significant advantage, as you can still tap circles to gain time while the clock is paused!
+                    <br /><br />
+                    Good luck!
+                  </p>
+                  <button className="button" onClick={startGame}>Play Game</button>
+                </div>
+              )}
+
+              {/* Upgrade Selection Screen */}
+              {gamePhase === 'upgrade_selection' && (
+                <div className="upgrade-selection-screen">
+                  <h2 className="upgrade-title">Choose Your Upgrade!</h2>
+                  {/* Display Time Left */}
+                  <div className="timer" style={{ marginBottom: '10px' }}>Time: {timeLeft.toFixed(0)}s</div>
+                  {/* Removed the separate upgrade status container */}
+                  <div className="upgrade-options-container">
+                    {currentUpgradeOptions.map(option => (
+                      <div
+                        key={option.key}
+                        className="upgrade-card"
+                        onClick={() => applyUpgrade(option)}
+                        data-clickable={upgradesClickable && timeLeft >= option.cost}
+                        style={{ cursor: (upgradesClickable && timeLeft >= option.cost) ? 'pointer' : 'not-allowed', opacity: (upgradesClickable && timeLeft >= option.cost) ? 1 : 0.6 }}
+                      >
+                        <h3>{option.name}</h3>
+                        <p>{option.description}</p>
+                        <div className="upgrade-value-display">
+                            <span className="upgrade-value-line" dangerouslySetInnerHTML={{ __html: `Current: <strong>${getUpgradeValue(option.key)}</strong>` }}></span>
+                            <span className="upgrade-value-line" dangerouslySetInnerHTML={{ __html: `→ New: <strong>${getProjectedUpgradeValue(option.key)}</strong>` }}></span>
+                        </div>
+                        {option.cost > 0 && (
+                            <p style={{ fontWeight: 'bold', color: '#FFD700' }}>Cost: {option.cost}s</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {/* New button for spending time */}
+                  {currentUpgradeOptions.length >= 2 && (
+                    <button
+                      className="button prominent-button"
+                      onClick={handleSpendTimeToChooseSecondUpgrade}
+                      disabled={!upgradesClickable || timeLeft < (3 + currentUpgradeOptions.reduce((sum, option) => sum + (option.cost || 0), 0))}
+                      style={{ marginTop: '20px', opacity: (!upgradesClickable || timeLeft < (3 + currentUpgradeOptions.reduce((sum, option) => sum + (option.cost || 0), 0))) ? 0.6 : 1 }}
+                    >
+                      Spend {3 + currentUpgradeOptions.reduce((sum, option) => sum + (option.cost || 0), 0)}s to Get Both Upgrades!
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Game Playing Screen */}
+              {gamePhase === 'playing' && (
+                <>
+                  <div ref={headerBarRef} className="header-bar">
+                    <div className="main-stats">
+                        <div className="top-stats-row">
+                            <div className="timer">Time: {timeLeft.toFixed(0)}s {isTimerPaused && "(Paused)"}</div>
+                            <div className="score">Score: {score}</div>
+                        </div>
+                        {/* Removed upgrade status container from here */}
+                    </div>
+                    <div className="abilities-container">
+                        <button
+                          className="ability-button"
+                          onClick={useClearScreenAbility}
+                          disabled={clearScreenUses === 0 || gameOver}
+                          style={{ opacity: (clearScreenUses > 0 && !gameOver) ? 1 : 0.6 }}
+                        >
+                          Clear Screen {renderUseIndicators(clearScreenUses, MAX_CLEAR_SCREEN_USES)}
+                        </button>
+                        <button
+                          className="ability-button"
+                          onClick={usePauseTimerAbility}
+                          disabled={pauseTimerUses === 0 || isTimerPaused || gameOver}
+                          style={{ opacity: (pauseTimerUses > 0 && !isTimerPaused && !gameOver) ? 1 : 0.6 }}
+                        >
+                          Pause Timer {renderUseIndicators(pauseTimerUses, MAX_PAUSE_TIMER_USES)}
+                        </button>
+                    </div>
+                  </div>
+
+                  <div ref={gameAreaRef} className="game-area">
+                    {/* Render circles */}
+                    {circles.map(circle => (
+                      <div
+                        key={circle.id}
+                        className="circle"
+                        style={{
+                          left: circle.x,
+                          top: circle.y,
+                          backgroundColor: circle.number === 1 ? '#4CAF50' : '#F44336'
+                        }}
+                        onClick={() => handleCircleClick(circle.id, circle.number)}
+                      >
+                        {circle.number}
+                      </div>
+                    ))}
+
+                    {/* Render power-ups */}
+                    {powerUps.map(powerUp => (
+                      <div
+                        key={powerUp.id}
+                        className="power-up"
+                        style={{
+                          left: powerUp.x,
+                          top: powerUp.y,
+                        }}
+                        onClick={() => handlePowerUpClick(powerUp.type, powerUp.id, powerUp.timeoutId)}
+                      >
+                        {powerUp.type === 'addTime' ? '⏱️' : (powerUp.type === 'clearScreen' ? '🧹' : (powerUp.type === 'slowSpawn' ? '🐢' : '⏸️'))}
+                      </div>
+                    ))}
+
+                    {/* Render visual cues */}
+                    {visualCues.map(cue => (
+                        <div
+                            key={cue.id}
+                            className="visual-cue"
+                            style={{
+                                left: cue.x,
+                                top: cue.y,
+                                color: cue.color,
+                            }}
+                        >
+                            {cue.text}
+                        </div>
+                    ))}
+                  </div>
+
+                  <div ref={bottomBarRef} className="bottom-bar">
+                  </div>
+                </>
+              )}
+
+              {/* Game Over Screen */}
+              {gameOver && (
+                <div className="game-over-screen">
+                  <h2 className="game-over-text">Game Over!</h2>
+                  <p className="final-score">Your final score: {score}</p>
+                  <button className="button" onClick={restartGame}>Play Again</button>
+                  <button className="button" onClick={returnToMenu}>Return to Menu</button>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
